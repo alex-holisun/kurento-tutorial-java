@@ -46,7 +46,7 @@ public class HelloWorldRecApp implements WebSocketConfigurer {
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(handler(), "/recording");
+    registry.addHandler(handler(), "/recording").setAllowedOrigins("*");
   }
 
   @Bean

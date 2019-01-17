@@ -44,6 +44,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import org.kurento.module.telmateframegrabber.TelmateFrameGrabber;
 
 /**
  * Hello World with recording handler (application and media logic).
@@ -56,7 +57,7 @@ import com.google.gson.JsonObject;
  */
 public class HelloWorldRecHandler extends TextWebSocketHandler {
 
-  private static final String RECORDER_FILE_PATH = "file:///tmp/HelloWorldRecorded.webm";
+  private static final String RECORDER_FILE_PATH = "file:///tmp/";
 
   private final Logger log = LoggerFactory.getLogger(HelloWorldRecHandler.class);
   private static final Gson gson = new GsonBuilder().create();
@@ -125,13 +126,17 @@ public class HelloWorldRecHandler extends TextWebSocketHandler {
       // 1. Media logic (webRtcEndpoint in loopback)
       MediaPipeline pipeline = kurento.createMediaPipeline();
       WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(pipeline).build();
-      webRtcEndpoint.connect(webRtcEndpoint);
-
+     
       MediaProfileSpecType profile = getMediaProfileFromMessage(jsonMessage);
-
-      RecorderEndpoint recorder = new RecorderEndpoint.Builder(pipeline, RECORDER_FILE_PATH)
+      TelmateFrameGrabber telmateFrameGrabber = new TelmateFrameGrabber.Builder(pipeline).build();
+      webRtcEndpoint.connect(telmateFrameGrabber);
+      telmateFrameGrabber.connect(webRtcEndpoint);
+      telmateFrameGrabber.setSnapInterval(3000);
+      telmateFrameGrabber.setStoragePath("/tmp/session");
+      telmateFrameGrabber.setWebRtcEpName(session.getId());
+      RecorderEndpoint recorder = new RecorderEndpoint.Builder(pipeline, RECORDER_FILE_PATH+session.getId()+".webm")
       .withMediaProfile(profile).build();
-
+recorder.connect(recorder, MediaType.DATA);
       recorder.addRecordingListener(new EventListener<RecordingEvent>() {
 
         @Override
